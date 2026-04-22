@@ -4,7 +4,6 @@ import os
 import json
 import base64
 import logging
-import tempfile
 from datetime import datetime
 
 import gspread
