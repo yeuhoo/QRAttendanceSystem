@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Scanner – Attendance</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      * { font-family: 'Plus Jakarta Sans', sans-serif; }
+      #reader { width:100%; max-width:360px; margin:0 auto; }
+      #reader video { border-radius:12px; }
+      #reader img   { border-radius:12px; }
+      .notif-in  { background:rgba(63,162,109,0.20);  border-color:#3FA26D; }
+      .notif-out { background:rgba(196,160,74,0.20);  border-color:#C4A04A; }
+      .notif-err { background:rgba(217,83,79,0.20);   border-color:#D9534F; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col items-center p-4 pb-8"
+        style="background:#1a1a24;color:#fff">
+
+    <div class="w-full max-w-md">
+
+      <!-- Header -->
+      <div class="text-center mt-2 mb-5">
+        <h1 class="text-2xl font-bold tracking-wide">QR Attendance Scanner</h1>
+        <p class="text-xs mt-1 uppercase tracking-widest font-semibold"
+           style="color:#C4A04A">Auto-Detect Mode</p>
+      </div>
+
+      <!-- Mode badge strip -->
+      <div class="flex gap-2 justify-center mb-5 text-xs font-semibold uppercase tracking-widest">
+        <span class="px-3 py-1 rounded-full" style="background:rgba(63,162,109,0.18);color:#3FA26D">
+          1st scan → Time In
+        </span>
+        <span class="px-3 py-1 rounded-full" style="background:rgba(196,160,74,0.18);color:#C4A04A">
+          2nd scan → Time Out
+        </span>
+      </div>
+
+      <!-- Camera -->
+      <div id="reader" class="mb-4"></div>
+      <p class="text-center text-xs mb-4" style="color:#5E5E5E">
+        Point camera at attendee's QR code — mode is detected automatically
+      </p>
+
+      <!-- Notification card -->
+      <div id="notification" class="hidden rounded-2xl p-5 text-center mb-5 border-2 transition-all">
+        <div id="notif-icon"  class="text-5xl mb-1"></div>
+        <div id="notif-name"  class="text-2xl font-bold"></div>
+        <div id="notif-type"  class="text-xs font-semibold uppercase tracking-widest mt-1 mb-0.5"></div>
+        <div id="notif-msg"   class="text-sm mt-1"></div>
+        <div id="notif-time"  class="text-xs mt-1 opacity-60"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3 mt-2">
+        <div class="rounded-xl p-3 text-center" style="background:rgba(63,162,109,0.18)">
+          <div class="text-2xl font-bold" id="stat-in">–</div>
+          <div class="text-xs mt-0.5" style="color:#3FA26D">In</div>
+        </div>
+        <div class="rounded-xl p-3 text-center" style="background:rgba(196,160,74,0.18)">
+          <div class="text-2xl font-bold" id="stat-out">–</div>
+          <div class="text-xs mt-0.5" style="color:#C4A04A">Out</div>
+        </div>
+        <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.07)">
+          <div class="text-2xl font-bold" id="stat-total">–</div>
+          <div class="text-xs mt-0.5" style="color:#8A8A8A">Total</div>
+        </div>
+      </div>
+
+      <!-- Other scanner links -->
+      <div class="mt-5 rounded-xl p-4 text-xs text-center space-y-1" style="background:rgba(255,255,255,0.05)">
+        <p style="color:#8A8A8A" class="mb-2 font-medium">Dedicated scanners</p>
+        <div class="flex justify-center gap-4">
+          <a href="/scanner/in"  class="font-semibold hover:underline" style="color:#3FA26D">Time In only →</a>
+          <a href="/scanner/out" class="font-semibold hover:underline" style="color:#C4A04A">Time Out only →</a>
+        </div>
+      </div>
+
+      <div class="text-center mt-4 flex justify-center gap-4">
+        <a href="/"      class="text-xs hover:underline" style="color:#5E5E5E">← Home</a>
+        <a href="/admin" class="text-xs hover:underline" style="color:#5E5E5E">Admin Panel</a>
+      </div>
+    </div>
+
+    <script>
+      const COOLDOWN_MS = 5000;
+      const lastScanned = {};
+
+      // Auto-start camera on load
+      const scanner = new Html5Qrcode('reader');
+      const config  = { fps: 10, qrbox: { width: 260, height: 260 } };
+      scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+        .catch(() => scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
+          .catch(() => showNotif('error', '', 'Camera Error', '', 'Allow camera permissions and refresh.', '')));
+
+      async function onScanSuccess(decodedText) {
+        const now = Date.now();
+        if (lastScanned[decodedText] && now - lastScanned[decodedText] < COOLDOWN_MS) return;
+        lastScanned[decodedText] = now;
+
+        try {
+          const res  = await fetch('/api/scan', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ attendee_id: decodedText, mode: 'auto' }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            const isIn = data.type === 'time_in';
+            showNotif('success',
+              '',
+              data.name,
+              isIn ? 'TIME IN' : 'TIME OUT',
+              data.message,
+              data.time,
+            );
+          } else {
+            showNotif('error', '', 'Scan Rejected', '', data.detail || 'Unknown error', '');
+          }
+          refreshStats();
+        } catch {
+            showNotif('error', '', 'Network Error', '', 'Cannot reach server. Check connection.', '');
+        }
+      }
+
+      function showNotif(type, icon, name, typeLabel, msg, time) {
+        const el = document.getElementById('notification');
+        document.getElementById('notif-icon').textContent  = icon;
+        document.getElementById('notif-name').textContent  = name;
+        document.getElementById('notif-type').textContent  = typeLabel;
+        document.getElementById('notif-msg').textContent   = msg;
+        document.getElementById('notif-time').textContent  = time;
+
+        el.className = 'rounded-2xl p-5 text-center mb-5 border-2 transition-all';
+        if      (type === 'success' && typeLabel === 'TIME IN')  el.classList.add('notif-in');
+        else if (type === 'success' && typeLabel === 'TIME OUT') el.classList.add('notif-out');
+        else                                                      el.classList.add('notif-err');
+        el.classList.remove('hidden');
+
+        clearTimeout(window._notifTimer);
+        window._notifTimer = setTimeout(() => el.classList.add('hidden'), 4500);
+      }
+
+      async function refreshStats() {
+        try {
+          const data = await (await fetch('/api/attendance')).json();
+          document.getElementById('stat-in').textContent    = data.filter(r => r.time_in).length;
+          document.getElementById('stat-out').textContent   = data.filter(r => r.time_out).length;
+          document.getElementById('stat-total').textContent = data.length;
+        } catch { /* ignore */ }
+      }
+
+      refreshStats();
+      setInterval(refreshStats, 30_000);
+    </script>
+  </body>
+</html>
+
+  <body
+    class="min-h-screen flex flex-col items-center p-4 pb-8"
+    style="background: #1a1a24; color: #fff"
+  >
+    <!-- Header -->
+    <div class="w-full max-w-md">
+      <h1 class="text-2xl font-bold text-center mt-2 mb-6 tracking-wide">
+        QR Attendance Scanner
+      </h1>
+
+      <!-- Mode selector -->
+      <div class="flex gap-3 justify-center mb-5">
+        <button
+          id="btn-time-in"
+          onclick="setMode('time_in')"
+          class="flex-1 py-4 rounded-xl text-lg font-bold transition-all duration-150 border-2 border-transparent"
+          style="background: #2a2a38"
+        >
+          TIME IN
+        </button>
+        <button
+          id="btn-time-out"
+          onclick="setMode('time_out')"
+          class="flex-1 py-4 rounded-xl text-lg font-bold transition-all duration-150 border-2 border-transparent"
+          style="background: #2a2a38"
+        >
+          TIME OUT
+        </button>
+      </div>
+
+      <!-- Current mode label -->
+      <p
+        id="mode-label"
+        class="text-center text-gray-400 mb-4 hidden text-sm font-medium uppercase tracking-widest"
+      ></p>
+
+      <!-- Camera view -->
+      <div id="scanner-wrap" class="hidden mb-4">
+        <div id="reader"></div>
+        <p class="text-center text-gray-500 text-xs mt-2">
+          Point camera at attendee's QR code
+        </p>
+      </div>
+
+      <!-- Notification card -->
+      <div
+        id="notification"
+        class="hidden rounded-2xl p-5 text-center mb-5 border-2 transition-all"
+      >
+        <div id="notif-icon" class="text-5xl mb-1"></div>
+        <div id="notif-name" class="text-2xl font-bold"></div>
+        <div id="notif-msg" class="text-base mt-1"></div>
+        <div id="notif-time" class="text-sm mt-1 opacity-75"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3 mt-2">
+        <div
+          class="rounded-xl p-3 text-center"
+          style="background: rgba(63, 162, 109, 0.18)"
+        >
+          <div class="text-2xl font-bold" id="stat-in">–</div>
+          <div class="text-xs mt-0.5" style="color: #3fa26d">Checked In</div>
+        </div>
+        <div
+          class="rounded-xl p-3 text-center"
+          style="background: rgba(217, 83, 79, 0.18)"
+        >
+          <div class="text-2xl font-bold" id="stat-out">–</div>
+          <div class="text-xs mt-0.5" style="color: #d9534f">Checked Out</div>
+        </div>
+        <div
+          class="rounded-xl p-3 text-center"
+          style="background: rgba(255, 255, 255, 0.07)"
+        >
+          <div class="text-2xl font-bold" id="stat-total">–</div>
+          <div class="text-xs mt-0.5" style="color: #8a8a8a">Total</div>
+        </div>
+      </div>
+
+      <div class="text-center mt-6 flex justify-center gap-4">
+        <a href="/" class="text-gray-600 hover:text-gray-400 text-xs">← Home</a>
+        <a href="/admin" class="text-gray-600 hover:text-gray-400 text-xs"
+          >Admin Panel</a
+        >
+      </div>
+    </div>
+
+    <script>
+      let currentMode = null;
+      let scanner = null;
+      // Cooldown map: attendee_id → last scan timestamp (ms)
+      const lastScanned = {};
+      const COOLDOWN_MS = 5000;
+
+      function setMode(mode) {
+        currentMode = mode;
+
+        const btnIn = document.getElementById("btn-time-in");
+        const btnOut = document.getElementById("btn-time-out");
+        const label = document.getElementById("mode-label");
+
+        // Reset both buttons
+        btnIn.style.background = "#2a2a38";
+        btnIn.style.borderColor = "transparent";
+        btnOut.style.background = "#2a2a38";
+        btnOut.style.borderColor = "transparent";
+
+        if (mode === "time_in") {
+          btnIn.style.background = "#2e4d3a";
+          btnIn.style.borderColor = "#3FA26D";
+          label.textContent = "\u25cf MODE: TIME IN";
+          label.className =
+            "text-center mb-4 text-sm font-medium uppercase tracking-widest";
+          label.style.color = "#3FA26D";
+        } else {
+          btnOut.style.background = "#4a2a2a";
+          btnOut.style.borderColor = "#D9534F";
+          label.textContent = "\u25cf MODE: TIME OUT";
+          label.className =
+            "text-center mb-4 text-sm font-medium uppercase tracking-widest";
+          label.style.color = "#D9534F";
+        }
+        label.classList.remove("hidden");
+
+        document.getElementById("scanner-wrap").classList.remove("hidden");
+        if (!scanner) startScanner();
+        refreshStats();
+      }
+
+      function startScanner() {
+        scanner = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 260, height: 260 } };
+
+        scanner
+          .start({ facingMode: "environment" }, config, onScanSuccess, () => {})
+          .catch(() => {
+            // Fallback: any available camera
+            scanner
+              .start({ facingMode: "user" }, config, onScanSuccess, () => {})
+              .catch(() =>
+                showNotif(
+                  "error",
+                  "",
+                  "Camera Error",
+                  "Cannot access camera. Allow camera permissions and refresh.",
+                  "",
+                ),
+              );
+          });
+      }
+
+      async function onScanSuccess(decodedText) {
+        if (!currentMode) return;
+
+        const now = Date.now();
+        if (
+          lastScanned[decodedText] &&
+          now - lastScanned[decodedText] < COOLDOWN_MS
+        )
+          return;
+        lastScanned[decodedText] = now;
+
+        try {
+          const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              attendee_id: decodedText,
+              mode: currentMode,
+            }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            const icon = "";
+            showNotif("success", icon, data.name, data.message, data.time);
+          } else {
+            const isDouble = res.status === 409;
+            showNotif(
+              "error",
+              "",
+              "Scan Rejected",
+              data.detail || "Unknown error",
+              "",
+            );
+          }
+          refreshStats();
+        } catch {
+          showNotif(
+            "error",
+            "",
+            "Network Error",
+            "Cannot reach server. Check connection.",
+            "",
+          );
+        }
+      }
+
+      function showNotif(type, icon, name, msg, time) {
+        const el = document.getElementById("notification");
+        document.getElementById("notif-icon").textContent = icon;
+        document.getElementById("notif-name").textContent = name;
+        document.getElementById("notif-msg").textContent = msg;
+        document.getElementById("notif-time").textContent = time;
+
+        el.className =
+          "rounded-2xl p-5 text-center mb-5 border-2 transition-all";
+        if (type === "success") {
+          el.style.background = "rgba(63,162,109,0.20)";
+          el.style.borderColor = "#3FA26D";
+        } else {
+          el.style.background = "rgba(217,83,79,0.20)";
+          el.style.borderColor = "#D9534F";
+        }
+        el.classList.remove("hidden");
+
+        clearTimeout(window._notifTimer);
+        window._notifTimer = setTimeout(() => el.classList.add("hidden"), 4500);
+      }
+
+      async function refreshStats() {
+        try {
+          const res = await fetch("/api/attendance");
+          const data = await res.json();
+          document.getElementById("stat-in").textContent = data.filter(
+            (r) => r.time_in,
+          ).length;
+          document.getElementById("stat-out").textContent = data.filter(
+            (r) => r.time_out,
+          ).length;
+          document.getElementById("stat-total").textContent = data.length;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      refreshStats();
+      setInterval(refreshStats, 30_000);
+    </script>
+  </body>
+</html>

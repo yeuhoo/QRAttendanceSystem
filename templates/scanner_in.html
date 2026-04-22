@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time In Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      body {
+        background: #0d2118;
+      }
+      #reader {
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+      #reader video {
+        border-radius: 12px;
+      }
+      #reader img {
+        border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen flex flex-col items-center p-4 pb-8"
+    style="color: #fff"
+  >
+    <div class="w-full max-w-md">
+      <!-- Header -->
+      <div class="text-center mt-2 mb-5">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 font-bold text-sm uppercase tracking-widest"
+          style="
+            background: rgba(63, 162, 109, 0.25);
+            color: #3fa26d;
+            border: 1px solid #3fa26d;
+          "
+        >
+          TIME IN
+        </div>
+        <h1 class="text-2xl font-bold tracking-wide">Entrance Scanner</h1>
+        <p class="text-xs mt-1" style="color: #5e5e5e">
+          Scan attendee QR to record arrival
+        </p>
+      </div>
+
+      <!-- Camera -->
+      <div id="reader" class="mb-4"></div>
+      <p class="text-center text-xs mb-4" style="color: #5e5e5e">
+        Point camera at attendee's QR code
+      </p>
+
+      <!-- Notification card -->
+      <div
+        id="notification"
+        class="hidden rounded-2xl p-5 text-center mb-5 border-2 transition-all"
+      >
+        <div id="notif-icon" class="text-5xl mb-1"></div>
+        <div id="notif-name" class="text-2xl font-bold"></div>
+        <div id="notif-msg" class="text-sm mt-1"></div>
+        <div id="notif-time" class="text-xs mt-1 opacity-60"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 gap-3 mt-2">
+        <div
+          class="rounded-xl p-3 text-center"
+          style="background: rgba(63, 162, 109, 0.18)"
+        >
+          <div class="text-2xl font-bold" id="stat-in">–</div>
+          <div class="text-xs mt-0.5" style="color: #3fa26d">Checked In</div>
+        </div>
+        <div
+          class="rounded-xl p-3 text-center"
+          style="background: rgba(255, 255, 255, 0.07)"
+        >
+          <div class="text-2xl font-bold" id="stat-total">–</div>
+          <div class="text-xs mt-0.5" style="color: #8a8a8a">
+            Total Attendees
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-5 flex justify-center gap-4">
+        <a
+          href="/scanner"
+          class="text-xs hover:underline"
+          style="color: #5e5e5e"
+          >← Auto Scanner</a
+        >
+        <a
+          href="/scanner/out"
+          class="text-xs hover:underline"
+          style="color: #c4a04a"
+          >Time Out Scanner →</a
+        >
+        <a href="/admin" class="text-xs hover:underline" style="color: #5e5e5e"
+          >Admin</a
+        >
+      </div>
+    </div>
+
+    <script>
+      const COOLDOWN_MS = 5000;
+      const lastScanned = {};
+
+      const scanner = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 260, height: 260 } };
+      scanner
+        .start({ facingMode: "environment" }, config, onScanSuccess, () => {})
+        .catch(() =>
+          scanner
+            .start({ facingMode: "user" }, config, onScanSuccess, () => {})
+            .catch(() =>
+              showNotif(
+                "error",
+                "",
+                "Camera Error",
+                "Allow camera permissions and refresh.",
+                "",
+              ),
+            ),
+        );
+
+      async function onScanSuccess(decodedText) {
+        const now = Date.now();
+        if (
+          lastScanned[decodedText] &&
+          now - lastScanned[decodedText] < COOLDOWN_MS
+        )
+          return;
+        lastScanned[decodedText] = now;
+
+        try {
+          const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ attendee_id: decodedText, mode: "time_in" }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            showNotif("success", "", data.name, data.message, data.time);
+          } else {
+            showNotif(
+              "error",
+              "",
+              "Scan Rejected",
+              data.detail || "Unknown error",
+              "",
+            );
+          }
+          refreshStats();
+        } catch {
+          showNotif("error", "", "Network Error", "Cannot reach server.", "");
+        }
+      }
+
+      function showNotif(type, icon, name, msg, time) {
+        const el = document.getElementById("notification");
+        document.getElementById("notif-icon").textContent = icon;
+        document.getElementById("notif-name").textContent = name;
+        document.getElementById("notif-msg").textContent = msg;
+        document.getElementById("notif-time").textContent = time;
+        el.className =
+          "rounded-2xl p-5 text-center mb-5 border-2 transition-all";
+        if (type === "success") {
+          el.style.background = "rgba(63,162,109,0.20)";
+          el.style.borderColor = "#3FA26D";
+        } else {
+          el.style.background = "rgba(217,83,79,0.20)";
+          el.style.borderColor = "#D9534F";
+        }
+        el.classList.remove("hidden");
+        clearTimeout(window._t);
+        window._t = setTimeout(() => el.classList.add("hidden"), 4500);
+      }
+
+      async function refreshStats() {
+        try {
+          const data = await (await fetch("/api/attendance")).json();
+          document.getElementById("stat-in").textContent = data.filter(
+            (r) => r.time_in,
+          ).length;
+          document.getElementById("stat-total").textContent = data.length;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      refreshStats();
+      setInterval(refreshStats, 30_000);
+    </script>
+  </body>
+</html>

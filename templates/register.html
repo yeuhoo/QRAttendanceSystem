@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Check-In</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      body {
+        background: #0f0c04;
+      }
+      input::placeholder {
+        color: #4a4030;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen flex flex-col items-center justify-center p-5"
+    style="color: #fff"
+  >
+    <div class="w-full max-w-sm">
+      <!-- Header -->
+      <div class="text-center mb-7">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 font-bold text-sm uppercase tracking-widest"
+          style="
+            background: rgba(196, 160, 74, 0.22);
+            color: #c4a04a;
+            border: 1px solid #c4a04a;
+          "
+        >
+          Event Check-In
+        </div>
+        <h1 class="text-2xl font-bold">Welcome!</h1>
+        <p class="text-xs mt-1" style="color: #5e5e5e">
+          Fill in your details to register and check in.
+        </p>
+      </div>
+
+      <!-- Form -->
+      <form id="regForm" class="space-y-4" novalidate>
+        <div>
+          <label
+            class="block text-xs font-semibold mb-1.5"
+            style="color: #c4a04a"
+            >Full Name <span style="color: #d9534f">*</span></label
+          >
+          <input
+            type="text"
+            id="name"
+            required
+            autocomplete="name"
+            placeholder="Juan dela Cruz"
+            class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+            style="background: #1a1500; border-color: #3a2e00; color: #fff"
+            onfocus="this.style.borderColor = '#C4A04A'"
+            onblur="this.style.borderColor = '#3a2e00'"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-xs font-semibold mb-1.5"
+            style="color: #c4a04a"
+            >Name of School <span style="color: #d9534f">*</span></label
+          >
+          <input
+            type="text"
+            id="school"
+            required
+            autocomplete="organization"
+            placeholder="University of the Philippines"
+            class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+            style="background: #1a1500; border-color: #3a2e00; color: #fff"
+            onfocus="this.style.borderColor = '#C4A04A'"
+            onblur="this.style.borderColor = '#3a2e00'"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-xs font-semibold mb-1.5"
+            style="color: #c4a04a"
+            >Position <span style="color: #d9534f">*</span></label
+          >
+          <input
+            type="text"
+            id="position"
+            required
+            placeholder="Teacher / Student / Staff"
+            class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+            style="background: #1a1500; border-color: #3a2e00; color: #fff"
+            onfocus="this.style.borderColor = '#C4A04A'"
+            onblur="this.style.borderColor = '#3a2e00'"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-xs font-semibold mb-1.5"
+            style="color: #c4a04a"
+            >Email Address <span style="color: #d9534f">*</span></label
+          >
+          <p class="text-xs mb-1.5" style="color: #5e5e5e">
+            You'll use this to check out at the exit.
+          </p>
+          <input
+            type="email"
+            id="email"
+            required
+            autocomplete="email"
+            placeholder="juan@example.com"
+            class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+            style="background: #1a1500; border-color: #3a2e00; color: #fff"
+            onfocus="this.style.borderColor = '#C4A04A'"
+            onblur="this.style.borderColor = '#3a2e00'"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1.5" style="color: #888"
+            >Phone / Mobile Number</label
+          >
+          <input
+            type="tel"
+            id="phone"
+            autocomplete="tel"
+            placeholder="09xx-xxx-xxxx"
+            class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+            style="background: #1a1500; border-color: #3a2e00; color: #fff"
+            onfocus="this.style.borderColor = '#C4A04A'"
+            onblur="this.style.borderColor = '#3a2e00'"
+          />
+        </div>
+
+        <div
+          id="errMsg"
+          class="hidden text-sm text-center py-3 px-4 rounded-xl"
+          style="
+            background: rgba(217, 83, 79, 0.2);
+            color: #d9534f;
+            border: 1px solid #d9534f;
+          "
+        ></div>
+
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full py-3 rounded-xl font-bold text-sm transition hover:opacity-90 active:scale-95 mt-2"
+          style="
+            background: linear-gradient(135deg, #c4a04a, #b18e39);
+            color: #fff;
+          "
+        >
+          Check In →
+        </button>
+      </form>
+
+      <p class="text-center text-xs mt-6" style="color: #3a3020">
+        Already registered?
+        <a href="/checkout" style="color: #c4a04a" class="hover:underline"
+          >Check out here →</a
+        >
+      </p>
+    </div>
+
+    <script>
+      document
+        .getElementById("regForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById("submitBtn");
+          const err = document.getElementById("errMsg");
+
+          const name = document.getElementById("name").value.trim();
+          const school = document.getElementById("school").value.trim();
+          const position = document.getElementById("position").value.trim();
+          const email = document.getElementById("email").value.trim();
+          if (!name) {
+            showErr("Full name is required.");
+            return;
+          }
+          if (!school) {
+            showErr("Name of school is required.");
+            return;
+          }
+          if (!position) {
+            showErr("Position is required.");
+            return;
+          }
+          if (!email) {
+            showErr("Email address is required.");
+            return;
+          }
+
+          btn.disabled = true;
+          btn.textContent = "Checking in…";
+          err.classList.add("hidden");
+
+          try {
+            const res = await fetch("/api/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name,
+                school,
+                position,
+                email,
+                phone: document.getElementById("phone").value.trim(),
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+              showErr(data.detail || "Something went wrong. Please try again.");
+              btn.disabled = false;
+              btn.textContent = "Check In →";
+              return;
+            }
+            const params = new URLSearchParams({
+              id: data.id,
+              name: data.name,
+              time: data.time,
+            });
+            window.location.href = `/register/confirm?${params}`;
+          } catch {
+            showErr("Cannot reach server. Make sure you are connected.");
+            btn.disabled = false;
+            btn.textContent = "Check In →";
+          }
+        });
+
+      function showErr(msg) {
+        const el = document.getElementById("errMsg");
+        el.textContent = msg;
+        el.classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual envs
+venv/
+.venv/
+env/
+
+# Database (local data — do not commit)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment variables
+.env
+
+# Google credentials (NEVER commit this)
+credentials.json
+*.json
+
+# Generated QR code images
+qr_codes/
+
+# macOS
+.DS_Store

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check Out</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      body {
+        background: #1a140a;
+      }
+      input::placeholder {
+        color: #4a4030;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen flex flex-col items-center justify-center p-5"
+    style="color: #fff"
+  >
+    <div class="w-full max-w-sm">
+      <!-- Form section -->
+      <div id="formSection">
+        <div class="text-center mb-7">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 font-bold text-sm uppercase tracking-widest"
+            style="
+              background: rgba(196, 160, 74, 0.22);
+              color: #c4a04a;
+              border: 1px solid #c4a04a;
+            "
+          >
+            Check Out
+          </div>
+          <h1 class="text-2xl font-bold">See you next time!</h1>
+          <p class="text-xs mt-1" style="color: #5e5e5e">
+            Enter your name or email to record your departure.
+          </p>
+        </div>
+
+        <form id="checkoutForm" class="space-y-4" novalidate>
+          <div>
+            <label
+              class="block text-xs font-semibold mb-1.5"
+              style="color: #c4a04a"
+              >Name or Email Address</label
+            >
+            <input
+              type="text"
+              id="query"
+              required
+              autocomplete="off"
+              placeholder="Juan dela Cruz  or  juan@example.com"
+              class="w-full rounded-xl px-4 py-3 text-sm outline-none border-2 transition-colors"
+              style="background: #1a1500; border-color: #3a2e00; color: #fff"
+              onfocus="this.style.borderColor = '#C4A04A'"
+              onblur="this.style.borderColor = '#3a2e00'"
+            />
+          </div>
+
+          <div
+            id="errMsg"
+            class="hidden text-sm text-center py-3 px-4 rounded-xl"
+            style="
+              background: rgba(217, 83, 79, 0.2);
+              color: #d9534f;
+              border: 1px solid #d9534f;
+            "
+          ></div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="w-full py-3 rounded-xl font-bold text-sm transition hover:opacity-90 active:scale-95"
+            style="
+              background: linear-gradient(135deg, #c4a04a, #b18e39);
+              color: #fff;
+            "
+          >
+            Check Out →
+          </button>
+        </form>
+
+        <p class="text-center text-xs mt-6" style="color: #3a3020">
+          Not registered yet?
+          <a href="/register" style="color: #c4a04a" class="hover:underline"
+            >Check in here →</a
+          >
+        </p>
+      </div>
+
+      <!-- Success section -->
+      <div id="successSection" class="hidden text-center">
+        <div class="text-4xl font-bold mb-4" style="color: #c4a04a">BYE!</div>
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 font-bold text-sm uppercase tracking-widest"
+          style="
+            background: rgba(196, 160, 74, 0.22);
+            color: #c4a04a;
+            border: 1px solid #c4a04a;
+          "
+        >
+          TIME OUT RECORDED
+        </div>
+        <h2 class="text-2xl font-bold mb-1" id="successName"></h2>
+        <p class="text-sm mb-1" style="color: #c4a04a" id="successTime"></p>
+        <p class="text-sm mt-2" style="color: #888" id="successMsg"></p>
+        <a
+          href="/"
+          class="mt-8 inline-block text-xs hover:underline"
+          style="color: #5e5e5e"
+          >← Back to Home</a
+        >
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("checkoutForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById("submitBtn");
+          const err = document.getElementById("errMsg");
+          const query = document.getElementById("query").value.trim();
+
+          if (!query) {
+            showErr("Please enter your name or email.");
+            return;
+          }
+
+          btn.disabled = true;
+          btn.textContent = "Checking out…";
+          err.classList.add("hidden");
+
+          try {
+            const res = await fetch("/api/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+              showErr(data.detail || "Something went wrong. Please try again.");
+              btn.disabled = false;
+              btn.textContent = "Check Out →";
+              return;
+            }
+
+            document.getElementById("successName").textContent = data.name;
+            document.getElementById("successTime").textContent =
+              `Time Out: ${data.time}`;
+            document.getElementById("successMsg").textContent = data.message;
+            document.getElementById("formSection").classList.add("hidden");
+            document
+              .getElementById("successSection")
+              .classList.remove("hidden");
+          } catch {
+            showErr("Cannot reach server. Make sure you are connected.");
+            btn.disabled = false;
+            btn.textContent = "Check Out →";
+          }
+        });
+
+      function showErr(msg) {
+        const el = document.getElementById("errMsg");
+        el.textContent = msg;
+        el.classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>

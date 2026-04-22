@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Private School Heads Leadership Summit 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+    <style>
+      :root {
+        --gold: #c4a04a;
+        --gold-deep: #b18e39;
+        --gold-soft: #d6b86e;
+        --gold-bg: #f6f1e3;
+        --text-main: #2b2b2b;
+        --text-sec: #5e5e5e;
+        --text-muted: #8a8a8a;
+        --border: #e6e6e6;
+        --success: #3fa26d;
+      }
+
+      * {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+
+      body {
+        background: #fafafa;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Subtle gold-tinted gradient wash */
+      .gradient-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(
+            ellipse 80% 60% at 10% 0%,
+            rgba(196, 160, 74, 0.13) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 60% 50% at 90% 90%,
+            rgba(177, 142, 57, 0.09) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 50% 40% at 55% 15%,
+            rgba(214, 184, 110, 0.07) 0%,
+            transparent 50%
+          );
+      }
+
+      /* Card */
+      .card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        box-shadow: 0 2px 16px rgba(196, 160, 74, 0.07);
+      }
+
+      /* QR ring glow — gold */
+      .qr-ring {
+        box-shadow:
+          0 0 0 6px rgba(196, 160, 74, 0.12),
+          0 0 40px rgba(196, 160, 74, 0.2),
+          0 0 80px rgba(177, 142, 57, 0.1);
+      }
+
+      /* Pulse dot */
+      .pulse-dot::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+        margin-right: 6px;
+        animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        vertical-align: middle;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(0.85);
+        }
+      }
+
+      /* Shimmer line */
+      .shimmer-line {
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(196, 160, 74, 0.45),
+          rgba(177, 142, 57, 0.45),
+          transparent
+        );
+      }
+
+      /* Promo card */
+      .promo-card {
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease;
+        background: #ffffff;
+        border: 1px solid var(--border);
+      }
+      .promo-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(196, 160, 74, 0.15);
+        border-color: var(--gold-soft);
+      }
+
+      /* Nav buttons */
+      .btn-outline {
+        color: var(--gold);
+        border: 1px solid rgba(196, 160, 74, 0.45);
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .btn-outline:hover {
+        background: var(--gold-bg);
+        border-color: var(--gold);
+      }
+      .btn-gold {
+        background: var(--gold);
+        color: #ffffff;
+        transition: background 0.15s;
+      }
+      .btn-gold:hover {
+        background: var(--gold-deep);
+      }
+
+      /* Logo initial badge */
+      .logo-badge {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .logo-img {
+        max-height: 72px;
+        object-fit: contain;
+      }
+
+      /* Meta pill */
+      .meta-pill {
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--text-sec);
+        font-size: 0.7rem;
+        padding: 3px 12px;
+        border-radius: 9999px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="gradient-bg"></div>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+      <!-- ── Navbar ── -->
+      <nav
+        class="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full"
+      >
+        <div class="flex items-center gap-3">
+          <img
+            src="/static/images/erasebg-transformed.png"
+            alt="Logo"
+            class="h-24 w-auto object-contain"
+          />
+          <img
+            src="/static/images/erasebg-transformed (1).png"
+            alt="Logo"
+            class="h-32 w-auto object-contain"
+          />
+        </div>
+        <div class="flex gap-2">
+          <a
+            href="/admin"
+            class="btn-gold px-4 py-1.5 rounded-lg text-sm font-semibold"
+            >Admin</a
+          >
+        </div>
+      </nav>
+
+      <!-- ── Hero ── -->
+      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <!-- Event meta -->
+        <div data-aos="fade-down" data-aos-duration="600">
+          <div class="flex flex-wrap gap-3 justify-center mb-5">
+            <span class="meta-pill">April 27-28, 2026</span>
+            <span class="meta-pill"
+              >The Pinnacle Hotel and Suites, Davao City</span
+            >
+          </div>
+
+          <h1
+            class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center leading-tight tracking-tight"
+            style="color: var(--text-main)"
+          >
+            Private School Heads Leadership Summit 2026
+          </h1>
+          <p
+            class="text-center mt-3 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
+            style="color: var(--text-sec)"
+          >
+            Innovate. Inspire. Lead.
+          </p>
+        </div>
+
+        <!-- QR Flip Widget -->
+        <div
+          data-aos="zoom-in"
+          data-aos-delay="150"
+          data-aos-duration="700"
+          class="mt-10 card rounded-3xl p-7 flex flex-col items-center"
+        >
+          <!-- Toggle -->
+          <div class="flex rounded-full overflow-hidden border mb-5" style="border-color: #e5e5e5">
+            <button
+              id="btn-in"
+              onclick="showQR('in')"
+              class="px-6 py-2 text-sm font-bold transition-colors"
+              style="background: #3fa26d; color: #fff"
+            >Time In</button>
+            <button
+              id="btn-out"
+              onclick="showQR('out')"
+              class="px-6 py-2 text-sm font-bold transition-colors"
+              style="background: #f5f5f5; color: #888"
+            >Time Out</button>
+          </div>
+
+          <!-- Time In QR -->
+          <div id="qr-in" class="flex flex-col items-center gap-3">
+            <div class="text-xs font-bold uppercase tracking-widest mb-1" style="color: #3fa26d">
+              Entrance — Scan to Check In
+            </div>
+            <img
+              src="/scanner-qr/in"
+              alt="Check In QR"
+              class="w-52 h-52 sm:w-64 sm:h-64 rounded-2xl shadow-lg border-4 cursor-pointer hover:opacity-90 transition"
+              style="border-color: #3fa26d"
+              onclick="openFullscreen('/scanner-qr/in', '#3fa26d', 'ENTRANCE — SCAN TO CHECK IN')"
+              title="Click to fullscreen"
+            />
+            <div class="flex gap-3 mt-1">
+              <button
+                onclick="openFullscreen('/scanner-qr/in', '#3fa26d', 'ENTRANCE — SCAN TO CHECK IN')"
+                class="text-xs font-semibold px-5 py-2 rounded-full hover:opacity-80 transition"
+                style="background: #f0faf5; color: #3fa26d; border: 1.5px solid #3fa26d"
+              >&#x26F6; Fullscreen</button>
+            </div>
+          </div>
+
+          <!-- Time Out QR -->
+          <div id="qr-out" class="flex flex-col items-center gap-3 hidden">
+            <div class="text-xs font-bold uppercase tracking-widest mb-1" style="color: #c4a04a">
+              Exit — Scan to Check Out
+            </div>
+            <img
+              src="/scanner-qr/out"
+              alt="Check Out QR"
+              class="w-52 h-52 sm:w-64 sm:h-64 rounded-2xl shadow-lg border-4 cursor-pointer hover:opacity-90 transition"
+              style="border-color: #c4a04a"
+              onclick="openFullscreen('/scanner-qr/out', '#c4a04a', 'EXIT — SCAN TO CHECK OUT')"
+              title="Click to fullscreen"
+            />
+            <div class="flex gap-3 mt-1">
+              <button
+                onclick="openFullscreen('/scanner-qr/out', '#c4a04a', 'EXIT — SCAN TO CHECK OUT')"
+                class="text-xs font-semibold px-5 py-2 rounded-full hover:opacity-80 transition"
+                style="background: #fdf8ee; color: #c4a04a; border: 1.5px solid #c4a04a"
+              >&#x26F6; Fullscreen</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fullscreen overlay -->
+        <div
+          id="fs-overlay"
+          class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center"
+          style="background: rgba(0,0,0,0.92)"
+          onclick="closeFullscreen()"
+        >
+          <p id="fs-label" class="text-xs font-bold uppercase tracking-widest mb-6" style="color: #fff"></p>
+          <img id="fs-img" src="" alt="QR" class="rounded-2xl border-4" style="max-width: 80vmin; max-height: 80vmin;" />
+          <p class="text-xs mt-6 opacity-40" style="color:#fff">Click anywhere to close</p>
+        </div>
+
+        <script>
+          function showQR(mode) {
+            const isIn = mode === "in";
+            document.getElementById("qr-in").classList.toggle("hidden", !isIn);
+            document.getElementById("qr-out").classList.toggle("hidden", isIn);
+            document.getElementById("btn-in").style.background = isIn ? "#3FA26D" : "#f5f5f5";
+            document.getElementById("btn-in").style.color = isIn ? "#fff" : "#888";
+            document.getElementById("btn-out").style.background = isIn ? "#f5f5f5" : "#C4A04A";
+            document.getElementById("btn-out").style.color = isIn ? "#888" : "#fff";
+          }
+          function openFullscreen(src, color, label) {
+            const overlay = document.getElementById("fs-overlay");
+            document.getElementById("fs-img").src = src;
+            document.getElementById("fs-img").style.borderColor = color;
+            document.getElementById("fs-label").textContent = label;
+            document.getElementById("fs-label").style.color = color;
+            overlay.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+          }
+          function closeFullscreen() {
+            document.getElementById("fs-overlay").classList.add("hidden");
+            document.body.style.overflow = "";
+          }
+          document.addEventListener("keydown", e => { if (e.key === "Escape") closeFullscreen(); });
+        </script>
+
+        </div>
+      </main>
+
+      <!-- ── Footer ── -->
+      <footer
+        class="text-center text-xs py-6 px-4"
+        style="color: var(--text-muted)"
+      >
+        Powered by QR Attendance System &nbsp;·&nbsp;
+        <a href="/admin" class="hover:underline" style="color: var(--gold)"
+          >Admin</a
+        >
+      </footer>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script>
+      AOS.init({ once: true });
+    </script>
+  </body>
+</html>

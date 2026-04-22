@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Attendance – Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      .btn-gold {
+        background: #c4a04a;
+        color: #fff;
+      }
+      .btn-gold:hover {
+        background: #b18e39;
+      }
+      .btn-gold-outline {
+        border: 1px solid #c4a04a;
+        color: #c4a04a;
+        background: #fff;
+      }
+      .btn-gold-outline:hover {
+        background: #f6f1e3;
+      }
+      .focus-gold:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #c4a04a66;
+      }
+      .text-gold {
+        color: #c4a04a;
+      }
+      .bg-gold-soft {
+        background: #f6f1e3;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen" style="background: #fafafa">
+    <!-- Header -->
+    <header class="text-white shadow-lg" style="background: #c4a04a">
+      <div
+        class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center"
+      >
+        <div>
+          <h1 class="text-xl font-bold">QR Attendance System</h1>
+          <p class="text-xs" style="color: #f6f1e3">Admin Panel</p>
+        </div>
+        <div class="flex gap-2">
+          <a
+            href="/"
+            class="bg-white/20 text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition"
+          >
+            ← Home
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+          <div
+            class="text-3xl font-bold text-gold"
+            id="stat-total"
+            style="color: #c4a04a"
+          >
+            –
+          </div>
+          <div class="text-gray-500 text-sm mt-1">Total Attendees</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+          <div class="text-3xl font-bold text-green-600" id="stat-in">–</div>
+          <div class="text-gray-500 text-sm mt-1">Checked In</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+          <div class="text-3xl font-bold text-red-500" id="stat-out">–</div>
+          <div class="text-gray-500 text-sm mt-1">Checked Out</div>
+        </div>
+      </div>
+
+      <!-- Attendees Table -->
+      <div class="bg-white rounded-xl shadow">
+        <div
+          class="px-4 py-3 border-b flex flex-wrap gap-2 items-center justify-between"
+        >
+          <h2 class="text-lg font-bold text-gray-800">Attendees</h2>
+          <div class="flex gap-2 flex-wrap">
+            <input
+              id="search"
+              type="search"
+              placeholder="Search name / org…"
+              class="border rounded-lg px-3 py-1.5 text-sm focus-gold w-44"
+            />
+            <button
+              onclick="downloadAllQRs()"
+              class="bg-gold-soft px-3 py-1.5 rounded-lg text-sm font-medium transition"
+              style="color: #c4a04a"
+              onmouseenter="this.style.background = '#EDE5CA'"
+              onmouseleave="this.style.background = '#F6F1E3'"
+            >
+              ⬇ All QR Codes
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Phone</th>
+                <th class="px-4 py-3 text-left">Organization</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3 text-center">QR</th>
+                <th class="px-4 py-3 text-center">Delete</th>
+              </tr>
+            </thead>
+            <tbody id="attendees-body" class="divide-y divide-gray-100">
+              <tr>
+                <td colspan="7" class="text-center py-10 text-gray-400">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      let allAttendees = [];
+
+      // ── Helpers ────────────────────────────────────────────────────────────────
+
+      function esc(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function fmtTime(iso) {
+        if (!iso) return "";
+        try {
+          return new Date(iso).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } catch {
+          return iso;
+        }
+      }
+
+      function calcDuration(tIn, tOut) {
+        if (!tIn || !tOut) return "";
+        const diff = new Date(tOut) - new Date(tIn);
+        if (diff <= 0) return "";
+        const h = Math.floor(diff / 3_600_000);
+        const m = Math.floor((diff % 3_600_000) / 60_000);
+        return `${h}h ${m}m`;
+      }
+
+      // ── Data loading ───────────────────────────────────────────────────────────
+
+      async function loadAll() {
+        const atRes = await fetch("/api/attendees");
+        allAttendees = await atRes.json();
+        renderAttendees(allAttendees);
+        updateStats(allAttendees);
+      }
+
+      function updateStats(list) {
+        document.getElementById("stat-total").textContent = list.length;
+        document.getElementById("stat-in").textContent = list.filter(
+          (a) => a.time_in,
+        ).length;
+        document.getElementById("stat-out").textContent = list.filter(
+          (a) => a.time_out,
+        ).length;
+      }
+
+      // ── Attendees table ────────────────────────────────────────────────────────
+
+      function renderAttendees(list) {
+        const tbody = document.getElementById("attendees-body");
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center py-10 text-gray-400">No attendees yet. Add one above.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map((a) => {
+            let badge;
+            if (a.time_out)
+              badge =
+                '<span class="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs">Checked Out</span>';
+            else if (a.time_in)
+              badge =
+                '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">Checked In</span>';
+            else
+              badge =
+                '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">Pending</span>';
+
+            return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">${esc(a.name)}</td>
+            <td class="px-4 py-3 text-gray-500">${esc(a.email)}</td>
+            <td class="px-4 py-3 text-gray-500">${esc(a.phone)}</td>
+            <td class="px-4 py-3 text-gray-500">${esc(a.organization)}</td>
+            <td class="px-4 py-3 text-center">${badge}</td>
+            <td class="px-4 py-3 text-center">
+              <a href="/api/attendees/${a.id}/qr" download="${esc(a.name)}_QR.png"
+                class="font-medium text-xs" style="color:#C4A04A">⬇ QR</a>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <button onclick="deleteAttendee('${a.id}', ${JSON.stringify(a.name)})"
+                class="text-red-400 hover:text-red-600 text-xs font-medium">Delete</button>
+            </td>
+          </tr>`;
+          })
+          .join("");
+      }
+
+      // ── Actions ────────────────────────────────────────────────────────────────
+
+      async function deleteAttendee(id, name) {
+        if (
+          !confirm(
+            `Delete "${name}"?\nThis also removes their attendance record.`,
+          )
+        )
+          return;
+        const res = await fetch(`/api/attendees/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          loadAll();
+        } else {
+          alert("Failed to delete attendee.");
+        }
+      }
+
+      async function resetAttendance() {
+        if (!confirm("Reset ALL attendance records?\nThis cannot be undone."))
+          return;
+        const res = await fetch("/api/attendance/reset", { method: "POST" });
+        if (res.ok) loadAll();
+      }
+
+      function downloadAllQRs() {
+        if (!allAttendees.length) return alert("No attendees to download.");
+        allAttendees.forEach((a, i) => {
+          setTimeout(() => {
+            const link = document.createElement("a");
+            link.href = `/api/attendees/${a.id}/qr`;
+            link.download = `${a.name}_QR.png`;
+            link.click();
+          }, i * 300);
+        });
+      }
+
+      // ── Search ─────────────────────────────────────────────────────────────────
+
+      document.getElementById("search").addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        renderAttendees(
+          allAttendees.filter(
+            (a) =>
+              a.name.toLowerCase().includes(q) ||
+              (a.organization || "").toLowerCase().includes(q) ||
+              (a.email || "").toLowerCase().includes(q),
+          ),
+        );
+      });
+
+      // ── Init ───────────────────────────────────────────────────────────────────
+
+      loadAll();
+      setInterval(loadAll, 20_000);
+    </script>
+  </body>
+</html>
