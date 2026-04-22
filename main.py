@@ -32,7 +32,9 @@ app.add_middleware(
 db = Database()
 sheets = SheetsManager()
 
-QR_DIR = "qr_codes"
+_DATA_DIR = os.getenv("DATA_DIR", ".")
+os.makedirs(_DATA_DIR, exist_ok=True)
+QR_DIR = os.path.join(_DATA_DIR, "qr_codes")
 os.makedirs(QR_DIR, exist_ok=True)
 app.mount("/qr_codes", StaticFiles(directory=QR_DIR), name="qr_codes")
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import datetime
 
-DB_PATH = "attendance.db"
+_DATA_DIR = os.getenv("DATA_DIR", ".")
+os.makedirs(_DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(_DATA_DIR, "attendance.db")
 
 
 class Database:
