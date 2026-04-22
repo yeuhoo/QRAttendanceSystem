@@ -81,8 +81,8 @@ class SheetsManager:
             self.enabled = False
             return
 
-        logger.info("Credentials loaded for: %s", creds_dict.get("client_email", "unknown"))
-        logger.info("Spreadsheet ID: [%s]", self.spreadsheet_id)
+        logger.error("DEBUG - Credentials loaded for: %s", creds_dict.get("client_email", "unknown"))
+        logger.error("DEBUG - Spreadsheet ID: [%s] length=%d", self.spreadsheet_id, len(self.spreadsheet_id))
 
         try:
             self.gc = gspread.service_account_from_dict(creds_dict, scopes=SCOPES)
