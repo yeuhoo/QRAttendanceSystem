@@ -81,6 +81,9 @@ class SheetsManager:
             self.enabled = False
             return
 
+        logger.info("Credentials loaded for: %s", creds_dict.get("client_email", "unknown"))
+        logger.info("Spreadsheet ID: [%s]", self.spreadsheet_id)
+
         try:
             self.gc = gspread.service_account_from_dict(creds_dict, scopes=SCOPES)
             logger.info("Google Sheets integration enabled (spreadsheet: %s)", self.spreadsheet_id)
