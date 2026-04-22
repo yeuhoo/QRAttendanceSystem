@@ -69,7 +69,7 @@ def _resolve_credentials_dict() -> dict | None:
 class SheetsManager:
     def __init__(self):
         self.enabled = os.getenv("GOOGLE_SHEETS_ENABLED", "false").lower() == "true"
-        self.spreadsheet_id = os.getenv("GOOGLE_SPREADSHEET_ID", "")
+        self.spreadsheet_id = os.getenv("GOOGLE_SPREADSHEET_ID", "").strip()
         self.gc = None
 
         if not self.enabled:
