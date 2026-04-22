@@ -99,15 +99,7 @@
               placeholder="Search name / org…"
               class="border rounded-lg px-3 py-1.5 text-sm focus-gold w-44"
             />
-            <button
-              onclick="downloadAllQRs()"
-              class="bg-gold-soft px-3 py-1.5 rounded-lg text-sm font-medium transition"
-              style="color: #c4a04a"
-              onmouseenter="this.style.background = '#EDE5CA'"
-              onmouseleave="this.style.background = '#F6F1E3'"
-            >
-              ⬇ All QR Codes
-            </button>
+
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -115,17 +107,16 @@
             <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
               <tr>
                 <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">School</th>
+                <th class="px-4 py-3 text-left">Position</th>
                 <th class="px-4 py-3 text-left">Email</th>
-                <th class="px-4 py-3 text-left">Phone</th>
-                <th class="px-4 py-3 text-left">Organization</th>
                 <th class="px-4 py-3 text-center">Status</th>
-                <th class="px-4 py-3 text-center">QR</th>
                 <th class="px-4 py-3 text-center">Delete</th>
               </tr>
             </thead>
             <tbody id="attendees-body" class="divide-y divide-gray-100">
               <tr>
-                <td colspan="7" class="text-center py-10 text-gray-400">
+                <td colspan="6" class="text-center py-10 text-gray-400">
                   Loading…
                 </td>
               </tr>
@@ -197,7 +188,7 @@
         const tbody = document.getElementById("attendees-body");
         if (!list.length) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-10 text-gray-400">No attendees yet. Add one above.</td></tr>';
+            '<tr><td colspan="6" class="text-center py-10 text-gray-400">No attendees yet.</td></tr>';
           return;
         }
         tbody.innerHTML = list
@@ -216,14 +207,10 @@
             return `
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-medium">${esc(a.name)}</td>
+            <td class="px-4 py-3 text-gray-500">${esc(a.school)}</td>
+            <td class="px-4 py-3 text-gray-500">${esc(a.position)}</td>
             <td class="px-4 py-3 text-gray-500">${esc(a.email)}</td>
-            <td class="px-4 py-3 text-gray-500">${esc(a.phone)}</td>
-            <td class="px-4 py-3 text-gray-500">${esc(a.organization)}</td>
             <td class="px-4 py-3 text-center">${badge}</td>
-            <td class="px-4 py-3 text-center">
-              <a href="/api/attendees/${a.id}/qr" download="${esc(a.name)}_QR.png"
-                class="font-medium text-xs" style="color:#C4A04A">⬇ QR</a>
-            </td>
             <td class="px-4 py-3 text-center">
               <button onclick="deleteAttendee('${a.id}', ${JSON.stringify(a.name)})"
                 class="text-red-400 hover:text-red-600 text-xs font-medium">Delete</button>
@@ -257,17 +244,7 @@
         if (res.ok) loadAll();
       }
 
-      function downloadAllQRs() {
-        if (!allAttendees.length) return alert("No attendees to download.");
-        allAttendees.forEach((a, i) => {
-          setTimeout(() => {
-            const link = document.createElement("a");
-            link.href = `/api/attendees/${a.id}/qr`;
-            link.download = `${a.name}_QR.png`;
-            link.click();
-          }, i * 300);
-        });
-      }
+
 
       // ── Search ─────────────────────────────────────────────────────────────────
 
