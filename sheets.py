@@ -8,6 +8,7 @@ import tempfile
 from datetime import datetime
 
 import gspread
+from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -37,9 +38,9 @@ def _calc_duration(time_in: str, time_out: str) -> str:
         return ""
 
 
-def _resolve_credentials() -> str | None:
+def _resolve_credentials_dict() -> dict | None:
     """
-    Returns a path to a valid credentials JSON file, or None.
+    Returns the credentials as a dict, or None.
     Supports two sources:
       1. GOOGLE_CREDENTIALS_JSON env var — base64-encoded JSON (for Railway/cloud)
       2. GOOGLE_CREDENTIALS_FILE env var — local file path (for local dev)
@@ -49,11 +50,7 @@ def _resolve_credentials() -> str | None:
     if creds_b64:
         try:
             creds_json = base64.b64decode(creds_b64).decode("utf-8")
-            json.loads(creds_json)  # validate it's valid JSON
-            tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
-            tmp.write(creds_json)
-            tmp.flush()
-            return tmp.name
+            return json.loads(creds_json)
         except Exception as exc:
             logger.error("Failed to decode GOOGLE_CREDENTIALS_JSON: %s", exc)
             return None
@@ -61,7 +58,12 @@ def _resolve_credentials() -> str | None:
     # Local: credentials file path
     creds_file = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
     if os.path.exists(creds_file):
-        return creds_file
+        try:
+            with open(creds_file) as f:
+                return json.load(f)
+        except Exception as exc:
+            logger.error("Failed to read credentials file: %s", exc)
+            return None
 
     return None
 
@@ -75,14 +77,15 @@ class SheetsManager:
         if not self.enabled:
             return
 
-        creds_path = _resolve_credentials()
-        if not creds_path:
+        creds_dict = _resolve_credentials_dict()
+        if not creds_dict:
             logger.warning("Google Sheets enabled but no credentials found. Disabling Sheets sync.")
             self.enabled = False
             return
 
         try:
-            self.gc = gspread.service_account(filename=creds_path, scopes=SCOPES)
+            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+            self.gc = gspread.authorize(creds)
             logger.info("Google Sheets integration enabled (spreadsheet: %s)", self.spreadsheet_id)
         except Exception as exc:
             logger.error("Google Sheets init failed: %s", exc)
