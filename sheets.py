@@ -7,7 +7,6 @@ import logging
 from datetime import datetime
 
 import gspread
-from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -83,8 +82,7 @@ class SheetsManager:
             return
 
         try:
-            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-            self.gc = gspread.authorize(creds)
+            self.gc = gspread.service_account_from_dict(creds_dict, scopes=SCOPES)
             logger.info("Google Sheets integration enabled (spreadsheet: %s)", self.spreadsheet_id)
         except Exception as exc:
             logger.error("Google Sheets init failed: %s", exc)
