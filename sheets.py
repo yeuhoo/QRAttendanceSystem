@@ -83,11 +83,16 @@ class SheetsManager:
 
         try:
             self.gc = gspread.service_account(filename=creds_path, scopes=SCOPES)
-            self._ensure_headers()
             logger.info("Google Sheets integration enabled (spreadsheet: %s)", self.spreadsheet_id)
         except Exception as exc:
             logger.error("Google Sheets init failed: %s", exc)
             self.enabled = False
+            return
+
+        try:
+            self._ensure_headers()
+        except Exception as exc:
+            logger.warning("Google Sheets headers check failed (will retry on write): %s", exc)
 
     # ── Internal helpers ───────────────────────────────────────────────────────
 
