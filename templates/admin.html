@@ -59,6 +59,12 @@
           >
             ← Home
           </a>
+          <a
+            href="/admin/logout"
+            class="bg-white/20 text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition"
+          >
+            Logout
+          </a>
         </div>
       </div>
     </header>
@@ -99,7 +105,6 @@
               placeholder="Search name / org…"
               class="border rounded-lg px-3 py-1.5 text-sm focus-gold w-44"
             />
-
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -243,8 +248,6 @@
         const res = await fetch("/api/attendance/reset", { method: "POST" });
         if (res.ok) loadAll();
       }
-
-
 
       // ── Search ─────────────────────────────────────────────────────────────────
 

@@ -4,9 +4,10 @@ import csv
 import io
 import socket
 from datetime import datetime
+from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Response, cookies, Form
+from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -28,6 +29,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Admin credentials from env
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 db = Database()
 sheets = SheetsManager()
@@ -154,8 +159,36 @@ def scanner_out_qr():
 
 
 @app.get("/admin", include_in_schema=False)
-def admin_page():
+def admin_page(request: Request):
+    # Check for admin session cookie
+    if request.cookies.get("admin_session") != ADMIN_PASSWORD:
+        return templates.TemplateResponse("login.html", {"request": request})
     return FileResponse("templates/admin.html")
+
+
+@app.post("/admin/login", include_in_schema=False)
+def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        response = RedirectResponse(url="/admin", status_code=302)
+        response.set_cookie(
+            key="admin_session",
+            value=ADMIN_PASSWORD,
+            httponly=True,
+            max_age=3600 * 8,  # 8 hours
+            samesite="lax",
+        )
+        return response
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request, "error": "Invalid username or password"},
+    )
+
+
+@app.get("/admin/logout", include_in_schema=False)
+def admin_logout():
+    response = RedirectResponse(url="/")
+    response.delete_cookie("admin_session")
+    return response
 
 
 @app.get("/scanner", include_in_schema=False)
