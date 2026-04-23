@@ -38,36 +38,6 @@
       <h1 class="text-2xl font-bold mb-1" id="greetName">Welcome!</h1>
       <p class="text-sm mb-1" style="color: #3fa26d" id="timeLabel"></p>
 
-      <!-- QR section -->
-      <div
-        class="mt-5 p-5 rounded-2xl"
-        style="background: rgba(63, 162, 109, 0.12); border: 1px solid #3fa26d"
-      >
-        <p
-          class="text-xs font-bold uppercase tracking-widest mb-3"
-          style="color: #3fa26d"
-        >
-          Your Personal QR Code
-        </p>
-        <img
-          id="qrImg"
-          src=""
-          alt="Your QR Code"
-          class="w-44 h-44 rounded-xl mx-auto shadow-lg bg-white p-1"
-        />
-        <p class="text-xs mt-3 leading-relaxed" style="color: #888">
-          <strong style="color: #fff">Screenshot this QR.</strong><br />
-          Show it at the exit to record your Time Out.
-        </p>
-        <button
-          onclick="downloadQR()"
-          class="mt-3 text-xs font-semibold px-4 py-1.5 rounded-full hover:opacity-80 transition"
-          style="background: #3fa26d; color: #fff"
-        >
-          ⬇ Save QR to Phone
-        </button>
-      </div>
-
       <!-- Checkout link -->
       <a
         href="/checkout"
@@ -100,14 +70,6 @@
       } else {
         document.getElementById("greetName").textContent = `Welcome, ${name}!`;
         document.getElementById("timeLabel").textContent = `Time In: ${time}`;
-        document.getElementById("qrImg").src = `/api/attendees/${id}/qr`;
-      }
-
-      function downloadQR() {
-        const a = document.createElement("a");
-        a.href = `/api/attendees/${id}/qr`;
-        a.download = "my-event-qr.png";
-        a.click();
       }
     </script>
   </body>
