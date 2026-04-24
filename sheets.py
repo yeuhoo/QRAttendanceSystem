@@ -7,7 +7,7 @@ import logging
 import gspread
 from dotenv import load_dotenv
 
-from ph_time import fmt_ph_sheet_datetime, parse_instant
+from ph_time import fmt_ph_iso_local_for_sheet, fmt_ph_sheet_datetime, parse_instant
 
 load_dotenv()
 
@@ -144,6 +144,9 @@ class SheetsManager:
             except Exception:
                 ts = time_in or ""
 
+            tin_cell = fmt_ph_iso_local_for_sheet(time_in) if time_in else ""
+            tout_cell = fmt_ph_iso_local_for_sheet(time_out) if time_out else ""
+
             row_data = [
                 ts,
                 attendee.get("name", ""),
@@ -151,8 +154,8 @@ class SheetsManager:
                 attendee.get("position", ""),
                 attendee.get("email", ""),
                 attendee.get("phone", ""),
-                time_in or "",
-                time_out or "",
+                tin_cell,
+                tout_cell,
                 duration,
             ]
 

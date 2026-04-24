@@ -43,3 +43,11 @@ def fmt_ph_sheet_datetime(iso_str: str) -> str:
     if not iso_str:
         return ""
     return parse_instant(iso_str).astimezone(TZ_PH).strftime("%b %d %Y %I:%M %p")
+
+
+def fmt_ph_iso_local_for_sheet(iso_str: str) -> str:
+    """Philippine wall-clock as ``YYYY-MM-DDTHH:MM:SS`` (no ``+08:00``) for Sheets cells."""
+    if not iso_str:
+        return ""
+    dt = parse_instant(iso_str).astimezone(TZ_PH)
+    return dt.replace(tzinfo=None).isoformat(timespec="seconds")
