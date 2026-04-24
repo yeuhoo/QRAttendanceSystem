@@ -98,7 +98,21 @@
           class="px-4 py-3 border-b flex flex-wrap gap-2 items-center justify-between"
         >
           <h2 class="text-lg font-bold text-gray-800">Attendees</h2>
-          <div class="flex gap-2 flex-wrap">
+          <div class="flex gap-2 flex-wrap items-center">
+            <button
+              type="button"
+              onclick="resetAttendance()"
+              class="btn-gold-outline text-xs font-semibold px-3 py-1.5 rounded-lg"
+            >
+              Clear times only
+            </button>
+            <button
+              type="button"
+              onclick="deleteAllAttendees()"
+              class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+            >
+              Remove all attendees
+            </button>
             <input
               id="search"
               type="search"
@@ -234,7 +248,10 @@
           )
         )
           return;
-        const res = await fetch(`/api/attendees/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/attendees/${id}`, {
+          method: "DELETE",
+          credentials: "same-origin",
+        });
         if (res.ok) {
           loadAll();
         } else {
@@ -243,10 +260,35 @@
       }
 
       async function resetAttendance() {
-        if (!confirm("Reset ALL attendance records?\nThis cannot be undone."))
+        if (!confirm("Clear all check-in / check-out times?\nAttendee names stay in the list."))
           return;
-        const res = await fetch("/api/attendance/reset", { method: "POST" });
+        const res = await fetch("/api/attendance/reset", {
+          method: "POST",
+          credentials: "same-origin",
+        });
         if (res.ok) loadAll();
+        else alert("Could not reset attendance.");
+      }
+
+      async function deleteAllAttendees() {
+        if (
+          !confirm(
+            "Remove EVERY attendee from this event?\nAll QR codes and attendance will be deleted. This cannot be undone.",
+          )
+        )
+          return;
+        if (!confirm("Final confirmation: empty the entire attendee list?")) return;
+        const res = await fetch("/api/attendees/reset-all", {
+          method: "POST",
+          credentials: "same-origin",
+        });
+        if (res.ok) {
+          await loadAll();
+        } else if (res.status === 401) {
+          alert("Session expired — log in again.");
+        } else {
+          alert("Could not remove all attendees.");
+        }
       }
 
       // ── Search ─────────────────────────────────────────────────────────────────

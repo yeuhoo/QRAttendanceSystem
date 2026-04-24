@@ -72,6 +72,14 @@ class Database:
         with self._conn() as conn:
             conn.execute("DELETE FROM attendees WHERE id = ?", (id,))
 
+    def delete_all_attendees(self) -> list[str]:
+        """Remove every attendee (attendance rows cascade). Returns deleted ids for QR cleanup."""
+        with self._conn() as conn:
+            rows = conn.execute("SELECT id FROM attendees").fetchall()
+            ids = [r[0] for r in rows]
+            conn.execute("DELETE FROM attendees")
+            return ids
+
     # ── Attendance ─────────────────────────────────────────────────────────────
 
     def get_attendance(self, attendee_id: str) -> dict | None:

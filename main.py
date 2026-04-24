@@ -380,6 +380,19 @@ async def import_attendees(file: UploadFile = File(...)):
     return {"created": len(created), "errors": errors, "attendees": created}
 
 
+# NOTE: /reset-all must be defined before /{attendee_id} so FastAPI matches it first
+@app.post("/api/attendees/reset-all")
+def reset_all_attendees(request: Request):
+    if request.cookies.get("admin_session") != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+    ids = db.delete_all_attendees()
+    for aid in ids:
+        qr_path = os.path.join(QR_DIR, f"{aid}.png")
+        if os.path.exists(qr_path):
+            os.remove(qr_path)
+    return {"deleted": len(ids)}
+
+
 @app.get("/api/attendees/{attendee_id}/qr")
 def get_qr(attendee_id: str):
     # Validate it's a proper UUID to prevent path traversal
