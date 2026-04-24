@@ -20,6 +20,18 @@ from qr_gen import generate_qr_code
 
 load_dotenv()
 
+
+def _env_credential(key: str, default: str) -> str:
+    """Read admin-style secrets; strip whitespace and optional .env-style wrapping quotes."""
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    v = raw.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+        v = v[1:-1].strip()
+    return v
+
+
 app = FastAPI(title="QR Attendance System")
 templates = Jinja2Templates(directory="templates")
 
@@ -30,9 +42,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Admin credentials from env
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+# Admin credentials from env (Railway: enter values without quotes in the UI)
+ADMIN_USERNAME = _env_credential("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = _env_credential("ADMIN_PASSWORD", "admin123")
 
 db = Database()
 sheets = SheetsManager()
@@ -158,16 +170,7 @@ def scanner_out_qr():
     return FileResponse(qr_path, media_type="image/png")
 
 
-@app.get("/admin", include_in_schema=False)
-def admin_page(request: Request):
-    # Check for admin session cookie
-    if request.cookies.get("admin_session") != ADMIN_PASSWORD:
-        return templates.TemplateResponse("login.html", {"request": request})
-    return FileResponse("templates/admin.html")
-
-
-@app.post("/admin/login", include_in_schema=False)
-def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
+def _admin_process_login(request: Request, username: str, password: str):
     if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
         response = RedirectResponse(url="/admin", status_code=302)
         response.set_cookie(
@@ -176,6 +179,7 @@ def admin_login(request: Request, username: str = Form(...), password: str = For
             httponly=True,
             max_age=3600 * 8,  # 8 hours
             samesite="lax",
+            secure=request.url.scheme == "https",
         )
         return response
     return templates.TemplateResponse(
@@ -184,10 +188,35 @@ def admin_login(request: Request, username: str = Form(...), password: str = For
     )
 
 
+@app.get("/admin", include_in_schema=False)
+def admin_page(request: Request):
+    # Check for admin session cookie
+    if request.cookies.get("admin_session") != ADMIN_PASSWORD:
+        return templates.TemplateResponse("login.html", {"request": request})
+    return FileResponse("templates/admin.html")
+
+
+# Browsers submit forms with no `action` to the current URL (POST /admin) — accept that too.
+@app.post("/admin", include_in_schema=False)
+def admin_login_at_admin_path(
+    request: Request, username: str = Form(...), password: str = Form(...)
+):
+    return _admin_process_login(request, username, password)
+
+
+@app.post("/admin/login", include_in_schema=False)
+def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
+    return _admin_process_login(request, username, password)
+
+
 @app.get("/admin/logout", include_in_schema=False)
-def admin_logout():
+def admin_logout(request: Request):
     response = RedirectResponse(url="/")
-    response.delete_cookie("admin_session")
+    response.delete_cookie(
+        "admin_session",
+        path="/",
+        secure=request.url.scheme == "https",
+    )
     return response
 
 
