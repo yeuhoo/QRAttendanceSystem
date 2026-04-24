@@ -3,10 +3,11 @@ import uuid
 import csv
 import io
 import socket
-from datetime import datetime
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+
+from ph_time import fmt_ph_ampm, parse_instant, ph_now_iso_and_display
 from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -266,7 +267,7 @@ def self_register(data: RegisterRequest):
     if existing:
         attendance = db.get_attendance(existing["id"])
         if attendance and attendance.get("time_in"):
-            t = datetime.fromisoformat(attendance["time_in"]).strftime("%I:%M %p")
+            t = fmt_ph_ampm(attendance["time_in"])
             raise HTTPException(
                 status_code=409,
                 detail=f"You already checked in at {t}. Show your personal QR at the exit.",
@@ -282,9 +283,7 @@ def self_register(data: RegisterRequest):
                     "phone": data.phone.strip(), "school": data.school.strip(),
                     "position": data.position.strip()}
 
-    now = datetime.now()
-    timestamp    = now.isoformat(timespec="seconds")
-    display_time = now.strftime("%I:%M %p")
+    timestamp, display_time = ph_now_iso_and_display()
     db.record_time_in(attendee_id, timestamp)
     sheets.upsert_attendance(attendee, timestamp, None)
     return {"id": attendee_id, "name": attendee["name"], "time": display_time}
@@ -312,12 +311,10 @@ def self_checkout(data: CheckoutLookup):
     if not attendance or not attendance.get("time_in"):
         raise HTTPException(status_code=400, detail=f"{attendee['name']} has not checked in yet.")
     if attendance.get("time_out"):
-        prev = datetime.fromisoformat(attendance["time_out"]).strftime("%I:%M %p")
+        prev = fmt_ph_ampm(attendance["time_out"])
         raise HTTPException(status_code=409, detail=f"You already checked out at {prev}.")
 
-    now = datetime.now()
-    timestamp    = now.isoformat(timespec="seconds")
-    display_time = now.strftime("%I:%M %p")
+    timestamp, display_time = ph_now_iso_and_display()
     db.record_time_out(attendee["id"], timestamp)
     updated = db.get_attendance(attendee["id"])
     sheets.upsert_attendance(attendee, updated["time_in"], timestamp)
@@ -440,9 +437,7 @@ def process_scan(data: ScanRequest):
         raise HTTPException(status_code=404, detail="QR code not registered in this event")
 
     attendance = db.get_attendance(data.attendee_id)
-    now = datetime.now()
-    timestamp = now.isoformat(timespec="seconds")
-    display_time = now.strftime("%I:%M %p")
+    timestamp, display_time = ph_now_iso_and_display()
 
     # ── Auto mode: resolve to time_in or time_out based on current state ──
     if data.mode == "auto":
@@ -458,7 +453,7 @@ def process_scan(data: ScanRequest):
 
     if data.mode == "time_in":
         if attendance and attendance.get("time_in"):
-            prev = datetime.fromisoformat(attendance["time_in"]).strftime("%I:%M %p")
+            prev = fmt_ph_ampm(attendance["time_in"])
             raise HTTPException(
                 status_code=409,
                 detail=f"{attendee['name']} already checked in at {prev}",
@@ -480,7 +475,7 @@ def process_scan(data: ScanRequest):
                 detail=f"{attendee['name']} has not checked in yet",
             )
         if attendance.get("time_out"):
-            prev = datetime.fromisoformat(attendance["time_out"]).strftime("%I:%M %p")
+            prev = fmt_ph_ampm(attendance["time_out"])
             raise HTTPException(
                 status_code=409,
                 detail=f"{attendee['name']} already checked out at {prev}",
@@ -514,7 +509,7 @@ def export_attendance():
     for r in records:
         if r.get("time_in") and r.get("time_out"):
             try:
-                diff = datetime.fromisoformat(r["time_out"]) - datetime.fromisoformat(r["time_in"])
+                diff = parse_instant(r["time_out"]) - parse_instant(r["time_in"])
                 h, rem = divmod(int(diff.total_seconds()), 3600)
                 r["duration"] = f"{h}h {rem // 60}m"
             except Exception:

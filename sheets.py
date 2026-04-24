@@ -4,10 +4,10 @@ import os
 import json
 import base64
 import logging
-from datetime import datetime
-
 import gspread
 from dotenv import load_dotenv
+
+from ph_time import fmt_ph_sheet_datetime, parse_instant
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ COL_DUR  = 9
 
 def _calc_duration(time_in: str, time_out: str) -> str:
     try:
-        diff = datetime.fromisoformat(time_out) - datetime.fromisoformat(time_in)
+        diff = parse_instant(time_out) - parse_instant(time_in)
         h, rem = divmod(int(diff.total_seconds()), 3600)
         return f"{h}h {rem // 60}m"
     except Exception:
@@ -138,9 +138,9 @@ class SheetsManager:
             attendee_id = attendee["id"]
             duration = _calc_duration(time_in, time_out) if time_in and time_out else ""
 
-            # Timestamp = time_in formatted nicely, or now
+            # Timestamp column = time_in in Philippine local time
             try:
-                ts = datetime.fromisoformat(time_in).strftime("%b %d %Y %I:%M %p") if time_in else ""
+                ts = fmt_ph_sheet_datetime(time_in) if time_in else ""
             except Exception:
                 ts = time_in or ""
 

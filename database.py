@@ -4,6 +4,8 @@ import os
 import sqlite3
 from datetime import datetime
 
+from ph_time import now_ph
+
 _DATA_DIR = os.getenv("DATA_DIR", ".")
 os.makedirs(_DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(_DATA_DIR, "attendance.db")
@@ -47,7 +49,7 @@ class Database:
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO attendees (id, name, email, phone, school, position, created_at) VALUES (?,?,?,?,?,?,?)",
-                (id, name, email, phone, school, position, datetime.now().isoformat()),
+                (id, name, email, phone, school, position, now_ph().isoformat(timespec="seconds")),
             )
 
     def get_attendee(self, id: str) -> dict | None:
